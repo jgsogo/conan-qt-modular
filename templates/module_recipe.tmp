@@ -1,0 +1,13 @@
+from conans import ConanFile
+
+class {{module.name}}(ConanFile):
+    name = "{{module.name.lower()}}"
+    version = "{{version}}"
+    settings = "os", "arch", "compiler", "build_type"
+
+    {% if module.depends %}
+    def requirements(self):
+        {% for it in module.depends -%}
+        self.requires("{{it}}/{{version}}@{{user}}/{{channel}}")
+        {% endfor %}
+    {% endif %}
