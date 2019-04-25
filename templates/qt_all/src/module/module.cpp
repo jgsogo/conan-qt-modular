@@ -4,7 +4,7 @@
 #include <iostream>
 
 {% for it in module.depends -%}
-#include "qt/{{it}}/{{it}}.h"
+#include "{{it}}/{{it}}.h"
 {% endfor %}
 
 void {{module.name}}(const std::string& prefix) {

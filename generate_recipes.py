@@ -2,7 +2,9 @@ import configparser
 import os
 from jinja2 import Template
 import textwrap
+from collections import namedtuple
 
+module_type = namedtuple("module", ["name", "depends"])
 
 me = os.path.dirname(__file__)
 
@@ -15,6 +17,7 @@ def render(template, output_filename, **kwargs):
         f.write(content)
 
 
+"""
 def render_recipe(name, version, depends, output_path):
     template = os.path.join(me, "templates", "module_recipe.tmp")
     with open(template, 'r') as f:
@@ -26,9 +29,12 @@ def render_recipe(name, version, depends, output_path):
         f.write(content)
     
     return output_filename
-
+"""
 
 def generate_qt_all(modules, version, user, channel, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     # Basic data
     data = {"modules": [module.name for module in modules],
             "version": version,
@@ -41,13 +47,16 @@ def generate_qt_all(modules, version, user, channel, output_dir):
     render(template, output_filename, **data)
 
     # CMakeLists.txt
-    output_filename = os.path.join(output_dir, "CMakeLists.py")
-    template = os.path.join(me, "templates", "qt_all", "CMakeLists.py")
+    output_filename = os.path.join(output_dir, "CMakeLists.txt")
+    template = os.path.join(me, "templates", "qt_all", "CMakeLists.txt")
     render(template, output_filename, **data)
 
     # src/CMakeLists.txt
-    output_filename = os.path.join(output_dir, "src", "CMakeLists.py")
-    template = os.path.join(me, "templates", "qt_all", "src", "CMakeLists.py")
+    project_folder = os.path.join(output_dir, "src")
+    if not os.path.exists(project_folder):
+        os.makedirs(project_folder)
+    output_filename = os.path.join(project_folder, "CMakeLists.txt")
+    template = os.path.join(me, "templates", "qt_all", "src", "CMakeLists.txt")
     render(template, output_filename, **data)
 
     # Iterate each module
@@ -60,8 +69,8 @@ def generate_qt_all(modules, version, user, channel, output_dir):
             os.makedirs(module_folder)
 
         # CMakeLists.txt
-        output_filename = os.path.join(module_folder, "CMakeLists.py")
-        template = os.path.join(me, "templates", "qt_all", "src", "module", "CMakeLists.py")
+        output_filename = os.path.join(module_folder, "CMakeLists.txt")
+        template = os.path.join(me, "templates", "qt_all", "src", "module", "CMakeLists.txt")
         render(template, output_filename, **data)
 
         # header file
@@ -95,13 +104,23 @@ def _getsubmodules(filepath):
 
 def main():
     qtmodules = os.path.join(os.path.dirname(__file__), "qtmodules.conf")
-    modules = _getsubmodules(qtmodules)
+    modules_raw = _getsubmodules(qtmodules)
+    modules = []
+    for it, data in modules_raw.items():
+        modules.append(module_type(it, data["depends"]))
 
     conanfiles = []
     output_path = os.path.join(me, "output")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
+    version = "0.1"
+    user = "user"
+    channel = "channel"
+
+    generate_qt_all(modules, version, user, channel, os.path.join(output_path, "qt_all"))
+
+    """
     for name, data in modules.items():
         print(name)
         conanfile = render_recipe(name, "0.1", depends=data["depends"], output_path=output_path)
@@ -111,6 +130,7 @@ def main():
     with open(conan_export, "w") as f:
         for it in conanfiles:
             f.write("conan export {} issue/testing\n".format(it))
+    """
 
 if __name__ == "__main__":
     main()
