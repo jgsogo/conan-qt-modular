@@ -7,6 +7,9 @@ class QtAll(ConanFile):
     version = "{{version}}"
     settings = "os", "arch", "compiler", "build_type"
 
+    exports_sources = "src/*", "CMakeLists.txt"
+    generators = "cmake"
+
     def build(self):
         cmake = CMake(self)
         cmake.configure()

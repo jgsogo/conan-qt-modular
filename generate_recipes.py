@@ -17,19 +17,41 @@ def render(template, output_filename, **kwargs):
         f.write(content)
 
 
-"""
-def render_recipe(name, version, depends, output_path):
-    template = os.path.join(me, "templates", "module_recipe.tmp")
-    with open(template, 'r') as f:
-        t = Template(f.read())
-    content = t.render(libname=name, version=version, depends=depends)
+def generate_qt(modules, version, user, channel, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)    
 
-    output_filename = os.path.join(output_path, "{}.py".format(name.lower()))
-    with open(output_filename, "w") as f:
-        f.write(content)
+    # Basic data
+    data = {"modules": [module.name for module in modules],
+            "version": version,
+            "user": user,
+            "channel": channel
+            }
+
+    # conanfile
+    output_filename = os.path.join(output_dir, "conanfile.py")
+    template = os.path.join(me, "templates", "qt_recipe.tmp.py")
+    render(template, output_filename, **data)
+    return "qt", output_filename
+
+
+def generate_qt_module(module, version, user, channel, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Basic data
+    data = {"module": module,
+            "version": version,
+            "user": user,
+            "channel": channel
+            }
+
+    # conanfile
+    output_filename = os.path.join(output_dir, "conanfile.py")
+    template = os.path.join(me, "templates", "module_recipe.tmp.py")
+    render(template, output_filename, **data)
+    return module.name, output_filename
     
-    return output_filename
-"""
 
 def generate_qt_all(modules, version, user, channel, output_dir):
     if not os.path.exists(output_dir):
@@ -42,9 +64,9 @@ def generate_qt_all(modules, version, user, channel, output_dir):
             "channel": channel
             }
     # conanfile
-    output_filename = os.path.join(output_dir, "conanfile.py")
+    conanfile_filename = os.path.join(output_dir, "conanfile.py")
     template = os.path.join(me, "templates", "qt_all", "conanfile.py")
-    render(template, output_filename, **data)
+    render(template, conanfile_filename, **data)
 
     # CMakeLists.txt
     output_filename = os.path.join(output_dir, "CMakeLists.txt")
@@ -82,6 +104,7 @@ def generate_qt_all(modules, version, user, channel, output_dir):
         output_filename = os.path.join(module_folder, "{}.cpp".format(module.name))
         template = os.path.join(me, "templates", "qt_all", "src", "module", "module.cpp")
         render(template, output_filename, **data)
+    return "qt_all", conanfile_filename
 
 
 def _getsubmodules(filepath):
@@ -115,22 +138,29 @@ def main():
         os.makedirs(output_path)
 
     version = "0.1"
-    user = "user"
-    channel = "channel"
+    user = "issue"
+    channel = "testing"
 
-    generate_qt_all(modules, version, user, channel, os.path.join(output_path, "qt_all"))
+    print("Generate qt_all")
+    id, r = generate_qt_all(modules, version, user, channel, os.path.join(output_path, "qt_all"))
+    conanfiles.append((id, r))
 
-    """
-    for name, data in modules.items():
-        print(name)
-        conanfile = render_recipe(name, "0.1", depends=data["depends"], output_path=output_path)
-        conanfiles.append(conanfile)
+    for it in modules:
+        print("Generate {}".format(it.name))
+        id, r = generate_qt_module(it, version, user, channel, os.path.join(output_path, it.name))
+        conanfiles.append((id, r))
 
+    print("Generate qt")
+    id, r = generate_qt(modules, version, user, channel, os.path.join(output_path, "qt"))
+    conanfiles.append((id, r))
+
+    # Create jobs to run in Conan for all these recipes
     conan_export = os.path.join(me, "jobs.sh")
     with open(conan_export, "w") as f:
-        for it in conanfiles:
-            f.write("conan export {} issue/testing\n".format(it))
-    """
+        for id, r in conanfiles:
+            f.write("conan remove {}/{}@{}/{} -f\n".format(id, version, user, channel))
+            f.write("conan create {} {}/{}\n".format(r, user, channel))
+
 
 if __name__ == "__main__":
     main()
