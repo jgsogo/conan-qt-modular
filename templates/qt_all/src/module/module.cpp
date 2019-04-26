@@ -9,7 +9,7 @@
 
 void {{module.name}}(const std::string& prefix) {
     std::cout << prefix << "{{module.name}}\n";
-    {% for it in depends -%}
+    {% for it in module.depends -%}
     {{it}}(prefix + "\t");
     {% endfor %}
 }

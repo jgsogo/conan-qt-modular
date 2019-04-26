@@ -1,3 +1,4 @@
 .vscode/
 jobs.sh
 output/
+examples/*/build/*

@@ -1,0 +1,6 @@
+[requires]
+qtwebglplugin/0.1@issue/testing
+qtsensors/0.1@issue/testing
+
+[generators]
+cmake
