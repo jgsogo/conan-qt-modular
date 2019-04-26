@@ -3,8 +3,10 @@
 Conan packages for a modular library (Qt). This is just a POC (it doesn't build Qt libraries... yet)
 
 The idea that supports this POC is to compile just once all the Qt libraries for each configuration
-(this is done into the `qt_all` package) and then each other recipe is just repackaging libraries
-from that one. There is also a `qt` package that allow the consumer to choose which libraries to
+(this is done into the `qt_all` package, as a `build_require`) and then each other recipe is just repackaging libraries
+from that one.
+
+There is also a `qt` package that allows the consumer to choose which libraries to
 use using options, but as it is a header only that requires the other libraries there won't be
 combinatorial explosion and we won't waste time compiling from sources again.
 
