@@ -8,6 +8,10 @@ from that one. There is also a `qt` package that allow the consumer to choose wh
 use using options, but as it is a header only that requires the other libraries there won't be
 combinatorial explosion and we won't waste time compiling from sources again.
 
+Have a look at the dependency graph:
+
+![](graph.png)
+
 ## Usage
 
 Generate all the recipes from templates and create them (use `jobs.sh` script):
